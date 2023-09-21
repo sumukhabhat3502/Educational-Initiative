@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <regex>
 
 class Task {
 public:
@@ -103,6 +104,11 @@ private:
     }
 };
 
+bool isValidDate(const std::string& date) {
+    std::regex datePattern("(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/([12][0-9]{3})");
+    return std::regex_match(date, datePattern);
+}
+
 int main() {
     ToDoList toDoList;
     std::string command;
@@ -116,8 +122,14 @@ int main() {
             std::cout << "Enter description: ";
             std::cin.ignore();
             std::getline(std::cin, desc);
-            std::cout << "Enter due date: ";
+            std::cout << "Enter due date (dd/MM/yyyy): ";
             std::cin >> due;
+
+            if (!isValidDate(due)) {
+                std::cout << "Invalid due date. Please enter a date in the format dd/MM/yyyy." << std::endl;
+                continue;
+            }
+
             TaskBuilder builder;
             toDoList.addTask(builder.setDescription(desc).setDueDate(due).build());
         } else if (command == "mark") {
