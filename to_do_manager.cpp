@@ -62,6 +62,8 @@ public:
         if (tasks.count(desc)) {
             tasks[desc]->markCompleted();
             saveState();
+        } else {
+            throw std::invalid_argument("Task not found.");
         }
     }
 
@@ -73,10 +75,23 @@ public:
     }
 
     void viewTasks(std::string filter = "all") {
+        if (tasks.empty()) {
+            throw std::runtime_error("No tasks to view.");
+        }
+        if (filter != "all" && filter != "completed" && filter != "pending") {
+            throw std::invalid_argument("Invalid filter. Please enter 'all', 'completed', or 'pending'.");
+        }
+
+        bool taskFound = false;
         for (auto& task : tasks) {
             if (filter == "all" || (filter == "completed" && task.second->completed) || (filter == "pending" && !task.second->completed)) {
                 std::cout << task.second->description << " - " << (task.second->completed ? "Completed" : "Pending") << ", Due: " << task.second->dueDate << std::endl;
+                taskFound = true;
             }
+        }
+
+        if (!taskFound) {
+            throw std::runtime_error("No tasks found for the given filter.");
         }
     }
 
@@ -84,6 +99,8 @@ public:
         if (current > 0) {
             current--;
             tasks = history[current]->state;
+        } else {
+            throw std::runtime_error("Nothing to undo.");
         }
     }
 
@@ -91,6 +108,8 @@ public:
         if (current < history.size() - 1) {
             current++;
             tasks = history[current]->state;
+        } else {
+            throw std::runtime_error("Nothing to redo.");
         }
     }
 
@@ -117,46 +136,50 @@ int main() {
         std::cout << "Enter command (add/mark/delete/view/undo/redo/quit): ";
         std::cin >> command;
 
-        if (command == "add") {
-            std::string desc, due;
-            std::cout << "Enter description: ";
-            std::cin.ignore();
-            std::getline(std::cin, desc);
-            std::cout << "Enter due date (dd/MM/yyyy): ";
-            std::cin >> due;
+        try {
+            if (command == "add") {
+                std::string desc, due;
+                std::cout << "Enter description: ";
+                std::cin.ignore();
+                std::getline(std::cin, desc);
+                std::cout << "Enter due date (dd/MM/yyyy): ";
+                std::cin >> due;
 
-            if (!isValidDate(due)) {
-                std::cout << "Invalid due date. Please enter a date in the format dd/MM/yyyy." << std::endl;
-                continue;
+                if (!isValidDate(due)) {
+                    std::cout << "Invalid due date. Please enter a date in the format dd/MM/yyyy." << std::endl;
+                    continue;
+                }
+
+                TaskBuilder builder;
+                toDoList.addTask(builder.setDescription(desc).setDueDate(due).build());
+            } else if (command == "mark") {
+                std::string desc;
+                std::cout << "Enter description: ";
+                std::cin.ignore();
+                std::getline(std::cin, desc);
+                toDoList.markCompleted(desc);
+            } else if (command == "delete") {
+                std::string desc;
+                std::cout << "Enter description: ";
+                std::cin.ignore();
+                std::getline(std::cin, desc);
+                toDoList.deleteTask(desc);
+            } else if (command == "view") {
+                std::string filter;
+                std::cout << "Enter filter (all/completed/pending): ";
+                std::cin >> filter;
+                toDoList.viewTasks(filter);
+            } else if (command == "undo") {
+                toDoList.undo();
+            } else if (command == "redo") {
+                toDoList.redo();
+            } else if (command == "quit") {
+                break;
+            } else {
+                std::cout << "Invalid command." << std::endl;
             }
-
-            TaskBuilder builder;
-            toDoList.addTask(builder.setDescription(desc).setDueDate(due).build());
-        } else if (command == "mark") {
-            std::string desc;
-            std::cout << "Enter description: ";
-            std::cin.ignore();
-            std::getline(std::cin, desc);
-            toDoList.markCompleted(desc);
-        } else if (command == "delete") {
-            std::string desc;
-            std::cout << "Enter description: ";
-            std::cin.ignore();
-            std::getline(std::cin, desc);
-            toDoList.deleteTask(desc);
-        } else if (command == "view") {
-            std::string filter;
-            std::cout << "Enter filter (all/completed/pending): ";
-            std::cin >> filter;
-            toDoList.viewTasks(filter);
-        } else if (command == "undo") {
-            toDoList.undo();
-        } else if (command == "redo") {
-            toDoList.redo();
-        } else if (command == "quit") {
-            break;
-        } else {
-            std::cout << "Invalid command." << std::endl;
+        } catch (const std::exception& e) {
+            std::cout << "Error: " << e.what() << std::endl;
         }
     }
 
