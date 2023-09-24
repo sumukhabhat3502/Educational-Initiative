@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include <string>
+#include <string>de
 #include <map>
 #include <regex>
 
@@ -68,11 +68,17 @@ public:
     }
 
     void deleteTask(std::string desc) {
-        if (tasks.count(desc)) {
-            tasks.erase(desc);
-            saveState();
-        }
+    if (tasks.empty()) {
+        throw std::runtime_error("No tasks to delete.");
     }
+
+    if (tasks.count(desc)) {
+        tasks.erase(desc);
+        saveState();
+    } else {
+        throw std::invalid_argument("Task not found.");
+    }
+}
 
     void viewTasks(std::string filter = "all") {
         if (tasks.empty()) {
